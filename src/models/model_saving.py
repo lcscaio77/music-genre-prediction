@@ -4,7 +4,7 @@ import os
 import json
 from datetime import datetime
 
-def save_model(model, model_name, directory="../artifacts/models/", metadata=None):
+def save_model(model, model_name, directory="../models/", metadata=None):
     model_path = os.path.join(directory, f"{model_name}.joblib")
     dump(model, model_path)
     print(f"Modèle sauvegardé : {model_path}")
