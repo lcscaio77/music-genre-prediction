@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from joblib import load
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import label_binarize
@@ -20,12 +19,8 @@ from sklearn.metrics import (
 def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc_curve=True, plot_conf_mat=True):
     if classes is None:
         classes = model.classes_
-        n_classes = model.n_classes_
-    else:
-        if isinstance(classes, dict):
-            n_classes = len(classes.values())
-        else:
-            n_classes = len(classes)
+    
+    n_classes = len(classes)
 
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)
@@ -93,8 +88,11 @@ def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc
     if plot_conf_mat:
         cm = confusion_matrix(y_test, y_pred)
 
-        fig, ax = plt.subplots(figsize=(8, 6))
-        disp_cm = ConfusionMatrixDisplay(cm, display_labels=classes.values())
+        _, ax = plt.subplots(figsize=(8, 6))
+        if isinstance(classes, dict):
+            disp_cm = ConfusionMatrixDisplay(cm, display_labels=classes.values())
+        else:
+            disp_cm = ConfusionMatrixDisplay(cm, display_labels=classes)
         disp_cm.plot(cmap='Blues', ax=ax)
         plt.xticks(rotation=90)
         plt.title('Matrice de confusion')
