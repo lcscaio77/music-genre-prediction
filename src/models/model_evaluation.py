@@ -16,6 +16,7 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 
+
 def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc_curve=True, plot_conf_mat=True):
     if classes is None:
         classes = model.classes_
@@ -96,6 +97,37 @@ def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc
         disp_cm.plot(cmap='Blues', ax=ax)
         plt.xticks(rotation=90)
         plt.title('Matrice de confusion')
+        plt.grid(False)
         plt.show()
 
         print('-'*100)
+
+
+def plot_gridsearch(grid_search, params_grid):
+    best_params = grid_search.best_params_
+    for param in best_params:
+        print(f'Meilleure valeur de {param} : {best_params[param]}')
+
+    results = grid_search.cv_results_['mean_test_score']
+    params = []
+    for param in params_grid:
+        params.append(grid_search.cv_results_[f'param_{param}'])
+
+    combinations = list(zip(*params))
+
+
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(np.arange(len(results)), results, color='#0c6696')
+    
+    max_score_idx = np.argmax(results)
+    bars[max_score_idx].set_color('#961a0c')
+
+    params_comb_str = f'({", ".join([f"{param}" for param in params_grid])})'
+    plt.xticks(np.arange(len(results)), [f'({", ".join(map(str, comb))})' for comb in combinations], rotation=90)
+    plt.xlabel(f'Combinaison des hyperparamètres : {params_comb_str}')
+    plt.ylim(min(results) - 0.05, max(results) + 0.01)
+    plt.ylabel('Score moyen')
+    plt.title('Scores obtenus pour chaque combinaison de paramètres')
+    plt.tight_layout()
+    plt.show()
+

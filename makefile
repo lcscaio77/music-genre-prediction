@@ -1,23 +1,45 @@
 # Variables
-VENV = venv
-PYTHON = python3
+PYTHON := python3
+PIP := pip
+VENV_DIR := venv
+REQ_FILE := requirements.txt
+ACTIVATE := $(VENV_DIR)/bin/activate
 
-all: setup
+# Détection du système d'exploitation
+ifeq ($(OS),Windows_NT)
+	PYTHON := python
+	PIP := pip
+	ACTIVATE := $(VENV_DIR)\\Scripts\\activate
+endif
 
-# Crée un environnement virtuel
-setup: $(VENV)/bin/activate
+# Cible principale : installation du venv et des dépendances
+default: setup activate
 
-$(VENV)/bin/activate: requirements.txt
-	$(PYTHON) -m venv $(VENV)
-	$(VENV)/bin/pip install --upgrade pip
-	$(VENV)/bin/pip install -r requirements.txt
-	touch $(VENV)/bin/activate
-	@echo "Environnement virtuel prêt, activez-le avec :" 
-	@echo "Sur macOS/Linux : source $(VENV)/bin/activate ou $(VENV)\Scripts\activate"
-	@echo "Sur Windows : nom_du_venv\Scripts\activate"
+# Création de l'environnement virtuel
+$(VENV_DIR):
+	@echo "Création de l'environnement virtuel dans $(VENV_DIR)"
+	$(PYTHON) -m venv $(VENV_DIR)
 
-# Nettoie l'environnement
+# Installation des dépendances
+install: $(VENV_DIR)
+	@echo "Installation des dépendances depuis $(REQ_FILE)"
+	$(VENV_DIR)/bin/$(PIP) install -r $(REQ_FILE) || $(VENV_DIR)\\Scripts\\$(PIP) install -r $(REQ_FILE)
+
+# Activation de l'environnement virtuel
+activate: $(VENV_DIR)
+	@echo "Pour activer le venv, exécutez :"
+ifeq ($(OS),Windows_NT)
+	@echo "    .\\$(VENV_DIR)\\Scripts\\activate"
+else
+	@echo "    source $(ACTIVATE)"
+endif
+
+# Configuration complète : venv + dépendances
+setup: $(VENV_DIR) install
+
+# Nettoyage
 clean:
-	rm -rf $(VENV)
-	rm -f requirements.txt
-	@echo "Environnement virtuel supprimé."
+	@echo "Suppression de l'environnement virtuel $(VENV_DIR)"
+	@rm -rf $(VENV_DIR)
+
+.PHONY: default setup install activate clean
