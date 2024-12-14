@@ -25,8 +25,8 @@ def encode_categorical(data, columns):
     for col in columns:
         data[col] = encoder.fit_transform(data[col])
 
-    for cat, label in zip(encoder.classes_, range(len(encoder.classes_))):
-        print(f"{label} : {cat}")
+        mapping = " | ".join(f"{cat} -> {label}" for cat, label in zip(encoder.classes_, range(len(encoder.classes_))))
+        print(f"Encodage de la variable '{col}' : {mapping}")
 
     return data
 

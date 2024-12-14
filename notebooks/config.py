@@ -1,13 +1,11 @@
 import sys
 import os
 
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-RAW_DATA_FILE = os.path.join('..', 'data', 'raw', 'music_data.csv')
-PROCESSED_DATA_FOLDER = os.path.join('..', 'data', 'processed', '')
-PROCESSED_DATA_FILE = os.path.join('..', 'data', 'processed', 'processed_data_no_keys.csv')
-PROCESSED_DATA_COMBINED_RAP_HIPHOP_FILE = os.path.join('..', 'data', 'processed', 'processed_data_combined_rap_hiphop.csv')
+RAW_DATA_FILE = '../data/raw/music_data.csv'
+PROCESSED_DATA = '../data/processed/processed_data.csv'
+PROCESSED_DATA_COMBINED_RAP_HIPHOP_FILE = '../data/processed/processed_data_combined_rap_hiphop.csv'
 
 CLASSES = {
     0 : 'Alternative',

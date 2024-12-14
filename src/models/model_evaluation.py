@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import label_binarize
@@ -87,14 +88,21 @@ def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc
         print('-'*100)
         
     if plot_conf_mat:
-        cm = confusion_matrix(y_test, y_pred)
+        cm = confusion_matrix(y_test, y_pred, normalize='true')
+        cm *= 100
 
         _, ax = plt.subplots(figsize=(8, 6))
+
+        annot = np.array([['{:.0f}%'.format(val) for val in row] for row in cm])
         if isinstance(classes, dict):
-            disp_cm = ConfusionMatrixDisplay(cm, display_labels=classes.values())
+            sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=True, xticklabels=classes.values(), yticklabels=classes.values(), ax=ax, vmin=0, vmax=100)
         else:
-            disp_cm = ConfusionMatrixDisplay(cm, display_labels=classes)
-        disp_cm.plot(cmap='Blues', ax=ax)
+            sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=True, xticklabels=classes, yticklabels=classes, ax=ax, vmin=0, vmax=100)
+
+        cbar = ax.collections[0].colorbar
+        cbar.set_ticks(np.linspace(0, 100, 6))
+        cbar.set_ticklabels([f'{x:.0f}%' for x in cbar.get_ticks()])
+
         plt.xticks(rotation=90)
         plt.title('Matrice de confusion')
         plt.grid(False)
