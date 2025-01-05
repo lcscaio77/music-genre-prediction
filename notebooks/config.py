@@ -4,7 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 RAW_DATA_FILE = '../data/raw/music_data.csv'
-PROCESSED_DATA = '../data/processed/processed_data.csv'
+PROCESSED_DATA_FILE = '../data/processed/processed_data.csv'
 PROCESSED_DATA_COMBINED_RAP_HIPHOP_FILE = '../data/processed/processed_data_combined_rap_hiphop.csv'
 
 CLASSES = {

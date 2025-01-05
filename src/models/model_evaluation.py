@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+
+import seaborn as sns
+sns.set_theme()
 
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import (
@@ -14,11 +16,18 @@ from sklearn.metrics import (
     auc,
     log_loss,
     confusion_matrix,
-    ConfusionMatrixDisplay,
 )
 
 
-def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc_curve=True, plot_conf_mat=True):
+import pandas as pd
+from sklearn.metrics import (accuracy_score, log_loss, precision_score, recall_score, f1_score, roc_auc_score, 
+                             roc_curve, auc, confusion_matrix)
+from sklearn.preprocessing import label_binarize
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+def evaluate_model(model, X_test, y_test, classes=None, multiclass=True, print_results=True, plot_roc_curve=True, plot_conf_mat=True):
     if classes is None:
         classes = model.classes_
     
@@ -34,84 +43,100 @@ def evaluate_model(model, X_test, y_test, classes=None, per_class=True, plot_roc
     f1 = f1_score(y_test, y_pred, average='macro')
     roc_auc = roc_auc_score(y_test, y_prob, average='macro', multi_class='ovr')
 
-    print('-'*100 + '\n')
+    global_results = {
+        'Accuracy': accuracy,
+        'Log Loss': logloss,
+        'Precision': precision,
+        'Recall': recall,
+        'F1 Score': f1,
+        'ROC-AUC Score': roc_auc,
+    }
+    global_results = pd.DataFrame.from_dict(global_results, orient='index', columns=['Score'])
 
-    print(f'Global accuracy : {accuracy}')
-    print(f'Global log loss : {logloss}')
-    print(f'Global precision : {precision}')
-    print(f'Global recall : {recall}')
-    print(f'Global F1 score : {f1}')
-    print(f'Global ROC-AUC score : {roc_auc}')
+    per_class_results = None
 
-    if per_class:
-        precision = precision_score(y_test, y_pred, average=None)
-        recall = recall_score(y_test, y_pred, average=None)
-        f1 = f1_score(y_test, y_pred, average=None)
-        roc_auc = roc_auc_score(y_test, y_prob, average=None, multi_class='ovr')
+    if multiclass:
+        precision_per_class = precision_score(y_test, y_pred, average=None)
+        recall_per_class = recall_score(y_test, y_pred, average=None)
+        f1_per_class = f1_score(y_test, y_pred, average=None)
+        roc_auc_per_class = roc_auc_score(y_test, y_prob, average=None, multi_class='ovr')
 
-        scores_data = {
-            'Precision': precision,
-            'Recall' : recall,
-            'F1 score' : f1
+        class_metrics = {
+            'Precision': precision_per_class,
+            'Recall': recall_per_class,
+            'F1 Score': f1_per_class,
+            'ROC-AUC Score': roc_auc_per_class
         }
+
         if isinstance(classes, dict):
-            scores_per_class = pd.DataFrame(scores_data, index=list(classes.values()))
+            per_class_results = pd.DataFrame(class_metrics, index=list(classes.values()))
         else:
-            scores_per_class = pd.DataFrame(scores_data, index=classes)
+            per_class_results = pd.DataFrame(class_metrics, index=classes)
 
-        print('\n', scores_per_class)
+    if print_results:
+        print('-'*100 + '\n')
+        print("Métriques globales :\n")
+        print(global_results)
+
+        if multiclass:
+            print("\nMétriques par classe :\n")
+            print(per_class_results)
         
-    print('\n' + '-'*100)
+        print('\n' + '-'*100)
 
-    if plot_roc_curve:
-        fpr = {}; tpr = {}; roc_auc = {}
-        y_test_binarized = label_binarize(y_test, classes=np.arange(n_classes))
+        if plot_roc_curve:
+            fpr = {}; tpr = {}; roc_auc_curve = {}
+            y_test_binarized = label_binarize(y_test, classes=np.arange(n_classes))
 
-        for i in range(n_classes):
-            fpr[i], tpr[i], _ = roc_curve(y_test_binarized[:, i], y_prob[:, i])
-            roc_auc[i] = auc(fpr[i], tpr[i])
+            for i in range(n_classes):
+                fpr[i], tpr[i], _ = roc_curve(y_test_binarized[:, i], y_prob[:, i])
+                roc_auc_curve[i] = auc(fpr[i], tpr[i])
 
-        plt.figure(figsize=(8, 6))
+            plt.figure(figsize=(8, 6))
 
-        colors = plt.cm.tab20(np.linspace(0, 1, n_classes))
-        for i in range(n_classes):
-            plt.plot(fpr[i], tpr[i], color=colors[i], lw=2, label=f'{classes[i]} (AUC = {roc_auc[i]:.2f})')
+            colors = plt.cm.tab20(np.linspace(0, 1, n_classes))
+            for i in range(n_classes):
+                plt.plot(fpr[i], tpr[i], color=colors[i], lw=2, label=f'{classes[i]} (AUC = {roc_auc_curve[i]:.2f})')
 
-        plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+            plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
 
-        plt.title('Courbes ROC Multiclasse (One-vs-Rest)')
-        plt.xlabel('Taux de Faux Positifs (FPR)')
-        plt.ylabel('Taux de Vrais Positifs (TPR)')
-        plt.legend(loc='lower right')
-        plt.show()
-        
-        print('-'*100)
-        
-    if plot_conf_mat:
-        cm = confusion_matrix(y_test, y_pred, normalize='true')
-        cm *= 100
+            plt.title('Courbes ROC Multiclasse (One-vs-Rest)')
+            plt.xlabel('Taux de Faux Positifs (FPR)')
+            plt.ylabel('Taux de Vrais Positifs (TPR)')
+            plt.legend(loc='lower right')
+            plt.show()
+            
+            print('-'*100)
 
-        _, ax = plt.subplots(figsize=(8, 6))
+        if plot_conf_mat:
+            cm = confusion_matrix(y_test, y_pred, normalize='true')
+            cm *= 100
 
-        annot = np.array([['{:.0f}%'.format(val) for val in row] for row in cm])
-        if isinstance(classes, dict):
-            sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=True, xticklabels=classes.values(), yticklabels=classes.values(), ax=ax, vmin=0, vmax=100)
-        else:
-            sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=True, xticklabels=classes, yticklabels=classes, ax=ax, vmin=0, vmax=100)
+            _, ax = plt.subplots(figsize=(8, 6))
 
-        cbar = ax.collections[0].colorbar
-        cbar.set_ticks(np.linspace(0, 100, 6))
-        cbar.set_ticklabels([f'{x:.0f}%' for x in cbar.get_ticks()])
+            annot = np.array([['{:.0f}%'.format(val) for val in row] for row in cm])
+            if isinstance(classes, dict):
+                sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=True, xticklabels=classes.values(), yticklabels=classes.values(), ax=ax, vmin=0, vmax=100)
+            else:
+                sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=True, xticklabels=classes, yticklabels=classes, ax=ax, vmin=0, vmax=100)
 
-        plt.xticks(rotation=90)
-        plt.title('Matrice de confusion')
-        plt.grid(False)
-        plt.show()
+            cbar = ax.collections[0].colorbar
+            cbar.set_ticks(np.linspace(0, 100, 6))
+            cbar.set_ticklabels([f'{x:.0f}%' for x in cbar.get_ticks()])
 
-        print('-'*100)
+            plt.xticks(rotation=90)
+            plt.title('Matrice de confusion')
+            plt.grid(False)
+            plt.show()
+
+            print('-'*100)
+
+    return global_results, per_class_results
 
 
 def plot_gridsearch(grid_search, params_grid):
+    from operator import itemgetter
+
     best_params = grid_search.best_params_
     for param in best_params:
         print(f'Meilleure valeur de {param} : {best_params[param]}')
@@ -123,19 +148,30 @@ def plot_gridsearch(grid_search, params_grid):
 
     combinations = list(zip(*params))
 
+    sorted_results = sorted(enumerate(zip(results, combinations)), key=itemgetter(1), reverse=True)
+
+    top_results = sorted_results[:50]
+
+    top_scores, top_combinations = zip(*[(result[1][0], result[1][1]) for result in top_results])
 
     plt.figure(figsize=(12, 6))
-    bars = plt.bar(np.arange(len(results)), results, color='#0c6696')
-    
-    max_score_idx = np.argmax(results)
+    bars = plt.bar(np.arange(len(top_scores)), top_scores, color='#0c6696')
+
+    max_score_idx = np.argmax(top_scores)
     bars[max_score_idx].set_color('#961a0c')
 
     params_comb_str = f'({", ".join([f"{param}" for param in params_grid])})'
-    plt.xticks(np.arange(len(results)), [f'({", ".join(map(str, comb))})' for comb in combinations], rotation=90)
+    plt.xticks(
+        np.arange(len(top_scores)),
+        [f'({", ".join(map(str, comb))})' for comb in top_combinations],
+        rotation=90
+    )
     plt.xlabel(f'Combinaison des hyperparamètres : {params_comb_str}')
-    plt.ylim(min(results) - 0.05, max(results) + 0.01)
+    plt.ylim(min(top_scores) - 0.05, max(top_scores) + 0.01)
     plt.ylabel('Score moyen')
-    plt.title('Scores obtenus pour chaque combinaison de paramètres')
+    plt.title('Scores obtenus pour les 50 meilleures combinaisons de paramètres')
     plt.tight_layout()
     plt.show()
+
+    return best_params
 

@@ -25,8 +25,8 @@ def load_model(filename, directory='../models/'):
 
     try:
         model = load(model_path)
-        print('Modèle chargé avec succès !')
+        print(f"Modèle '{filename + '.joblib'}' chargé avec succès !")
         return model
     except Exception as e:
-        raise ValueError(f'Erreur lors du chargement du modèle : {e}')
+        raise ValueError(f"Erreur lors du chargement du modèle '{filename + '.joblib'}' : {e}")
 
